@@ -1,68 +1,35 @@
 # pdf-tool
 
-批量文档转 PDF 桌面工具。
+跨平台桌面应用，支持将多种文档**批量转换为 PDF**。上传一个 `.zip` 压缩包，自动转换其中的文档文件，输出保持原目录结构的 PDF 压缩包。
 
-## 架构概览
+## 功能特性
 
-![架构概览](doc/images/architecture-overview.png)
-
-## 技术选型
-
-### 桌面框架：Electron
-
-Electron 自带 Chromium，可直接复用 `printToPDF()` 完成 HTML / Markdown / TXT → PDF 转换，无需额外打包 headless Chrome。Tauri 目前没有 `printToPDF` API（feature request 自 2022 年至今未实现），不适合本项目。
-
-### Office 文档转换：LibreOffice headless（全平台统一）
-
-所有平台（Windows / macOS）统一使用 LibreOffice headless 转换 Word 和 Excel 文件，不走 Windows COM 自动化路径。原因：
-
-- 微软官方不推荐、不支持非交互环境下的 Office COM 自动化
-- COM 自动化存在模态对话框挂死、单线程不可重入、需要 Office 授权等问题
-- LibreOffice 在 Windows 上可直接使用系统已安装的 Microsoft 字体，转换效果接近原生 Office
-- 统一引擎 = 一份代码路径，维护成本大幅降低
-
-纯库方案（pandas、python-docx、Node.js docx-pdf 等）均无法满足排版保真度要求：它们是数据解析器而非渲染引擎，无法保留格式、图表、合并单元格、图片等。
-
-### HTML / Markdown / TXT 转换：Electron 内置 Chromium
-
-利用 Electron 的 `webContents.printToPDF()`，字体自动嵌入（Skia PDF 后端自动子集化嵌入）。PRD 要求串行队列不并发，恰好避开了 Electron 在并发场景下的性能劣势。
-
-### 引擎选择决策
-
-![引擎选择决策](doc/images/engine-decision-tree.png)
-
-### 内置字体：Google Noto 字体族
-
-| 语言 | 字体 | 大小估算 |
-|------|------|----------|
-| 中文 | Noto Sans CJK SC | ~16MB |
-| 英文 / 葡萄牙语 / 越南语 / 印尼 / 马来 / 匈牙利 | Noto Sans (Latin Extended) | ~1MB |
-| 泰语 | Noto Sans Thai | ~0.5MB |
-| 阿拉伯语 | Noto Sans Arabic | ~0.5MB |
-
-LibreOffice 字体回退补充（macOS / Linux）：
-
-| 缺失的 Microsoft 字体 | 替代字体（度量兼容） |
-|------------------------|---------------------|
-| Calibri | Carlito |
-| Cambria | Caladea |
-| Arial | Liberation Sans |
-| Times New Roman | Liberation Serif |
-| Courier New | Liberation Mono |
-
-### 转换流程
-
-![转换流程](doc/images/conversion-flowchart.png)
+- 支持 Word（`.doc` `.docx`）、Excel（`.xls` `.xlsx`）、HTML、Markdown、纯文本
+- 排版保真：表格、图片、分页等基本布局与源文档视觉效果一致
+- 多语言支持：中文、英文、葡萄牙语、泰语、印尼语、越南语、马来语、阿拉伯语、匈牙利语
+- 字体嵌入：输出 PDF 自动嵌入字体，不出现乱码或黑块
+- Excel 多 Sheet 拆分：可选按 Sheet 导出为独立 PDF
+- 离线运行：所有转换在本机完成，无需联网
+- 开箱即用：内置转换引擎和字体包，无需额外安装依赖
 
 ## 支持的文件类型
 
-| 类别 | 扩展名 | 转换引擎 |
-|------|--------|----------|
-| Word | `.doc` `.docx` | LibreOffice headless |
-| Excel | `.xls` `.xlsx` | LibreOffice headless |
-| HTML | `.html` | Electron Chromium printToPDF |
-| Markdown | `.md` | Markdown → HTML → Chromium printToPDF |
-| 纯文本 | `.txt` | 1000 字符分页 → HTML → Chromium printToPDF |
+| 类别 | 扩展名 |
+|------|--------|
+| Word | `.doc` `.docx` |
+| Excel | `.xls` `.xlsx` |
+| HTML | `.html` |
+| Markdown | `.md` |
+| 纯文本 | `.txt` |
+
+不支持的文件类型原样保留在输出包中。
+
+## 平台支持
+
+| 平台 | 安装包格式 |
+|------|-----------|
+| Windows | EXE / MSI |
+| macOS | DMG / APP |
 
 ## 文档
 
